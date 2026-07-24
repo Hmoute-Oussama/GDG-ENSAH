@@ -1,7 +1,8 @@
 'use client';
 
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { useRef, MouseEvent } from 'react';
+import { useRef, useState, MouseEvent } from 'react';
+import ApplyModal from '@/components/Forms/ApplyModal';
 
 interface Member {
   name: string;
@@ -143,6 +144,7 @@ function MemberCard({ member, index, featured = false }: { member: Member; index
 export default function Teams() {
   const founder = members[0];
   const rest = members.slice(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <section id="teams" className="relative py-32 px-6 overflow-hidden">
@@ -204,7 +206,9 @@ export default function Teams() {
               We're always looking for passionate people to join GDG ENSAH.
             </p>
           </div>
-          <button className="relative group overflow-hidden rounded-full p-[1px] shrink-0">
+          <button
+              onClick={() => setIsModalOpen(true)}
+              className="relative group overflow-hidden rounded-full p-[1px] shrink-0">
             <span className="absolute inset-0 bg-gradient-to-r from-[#4285F4] via-[#EA4335] to-[#FBBC05] rounded-full opacity-70 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
             <div className="relative px-10 py-4 bg-black rounded-full transition-all duration-300 group-hover:bg-black/50">
               <span className="font-bold text-base tracking-wide text-white">
@@ -214,6 +218,8 @@ export default function Teams() {
           </button>
         </motion.div>
       </div>
+
+      <ApplyModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
   );
 }
