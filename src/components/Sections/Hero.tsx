@@ -37,11 +37,16 @@ export default function Hero() {
           variants={itemVariants}
           className="text-6xl md:text-8xl font-extrabold tracking-tighter mb-8 leading-[1.1]"
         >
-          Innovate. <br className="md:hidden" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--google-blue)] via-[var(--google-red)] to-[var(--google-yellow)]">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--google-blue)] to-[#a0c4ff]">
+            Innovate.
+          </span>{' '}
+          <br className="md:hidden" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--google-red)] via-[var(--google-yellow)] to-[var(--google-red)]">
             Build.
           </span>{' '}
-          Connect.
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--google-green)] to-[#a8e6b8]">
+            Connect.
+          </span>
         </motion.h1>
 
         <motion.p

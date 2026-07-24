@@ -59,6 +59,20 @@ function AnimatedBlob() {
           opacity={0.4}
         />
       </mesh>
+
+      <mesh position={[-1.5, 2.5, -7]} scale={1.8}>
+        <sphereGeometry args={[1, 64, 64]} />
+        <MeshDistortMaterial
+          color="#34A853"
+          attach="material"
+          distort={0.45}
+          speed={1.8}
+          roughness={0.2}
+          metalness={0.8}
+          transparent
+          opacity={0.5}
+        />
+      </mesh>
     </Float>
   );
 }

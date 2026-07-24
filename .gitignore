@@ -42,3 +42,6 @@ next-env.d.ts
 
 # member submissions (contains personal data)
 /data/members.json
+
+# member photos (private)
+/images/

@@ -1,7 +1,7 @@
 'use client';
 
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { useRef, useState, MouseEvent } from 'react';
+import { motion } from 'framer-motion';
+import { useRef, useState, useEffect, ReactNode } from 'react';
 import ApplyModal from '@/components/Forms/ApplyModal';
 
 interface Member {
@@ -14,208 +14,405 @@ interface Member {
 }
 
 const members: Member[] = [
-  { name: "Meriem Jamili", role: "Founder & Team Leader", department: "Executive Office", initials: "MJ", color: "#4285F4" },
-  { name: "Marwa El Faiz", role: "Vice Team Leader", department: "Executive Office", initials: "ME", color: "#EA4335" },
-  { name: "Oumayma Errouas", role: "General Secretary", department: "Executive Office", initials: "OE", color: "#FBBC05" },
-  { name: "Marouane Bouderz", role: "Treasurer", department: "Finance", initials: "MB", color: "#34A853" },
-  { name: "Kaoutar El Ayadi", role: "Sponsorship Manager", department: "Partnerships", initials: "KE", color: "#4285F4" },
-  { name: "Oussama Hmoute", role: "External Relations Manager", department: "Partnerships", initials: "OH", color: "#EA4335" },
-  { name: "Abdelkader Ennia", role: "Community Manager", department: "Community", initials: "AE", color: "#34A853" },
-  { name: "Karim Erradi", role: "Human Resources", department: "People", initials: "KE", color: "#34A853" },
-  { name: "Youssef Samri", role: "Event Manager", department: "Events", initials: "YS", color: "#9C27B0" },
-  { name: "Meriem Kourad", role: "Media Manager", department: "Marketing", initials: "MK", color: "#34A853" },
-  { name: "Mohammed Addi", role: "Graphic Designer", department: "Marketing", initials: "MA", color: "#4285F4" },
+  { name: "Meriem Jamili",    role: "Founder & Team Leader",      department: "Executive",    initials: "MJ", color: "#4285F4", image: "/members/meriem_jamili.png" },
+  { name: "Marwa El Faiz",    role: "Vice Team Leader",           department: "Executive",    initials: "ME", color: "#EA4335" },
+  { name: "Oumayma Errouas", role: "General Secretary",          department: "Executive",    initials: "OE", color: "#FBBC05" },
+  { name: "Marouane Bouderz", role: "Treasurer",                  department: "Finance",      initials: "MB", color: "#34A853" },
+  { name: "Kaoutar El Ayadi", role: "Sponsorship Manager",        department: "Partnerships", initials: "KE", color: "#4285F4" },
+  { name: "Oussama Hmoute",  role: "External Relations",         department: "Partnerships", initials: "OH", color: "#EA4335", image: "/members/oussama_hmoute.jpg" },
+  { name: "Abdelkader Ennia", role: "Community Manager",          department: "Community",    initials: "AE", color: "#34A853" },
+  { name: "Karim Erradi",    role: "Human Resources",            department: "People",       initials: "KE", color: "#FBBC05", image: "/members/karim_erradi.jpg" },
+  { name: "Youssef Samri",   role: "Event Manager",              department: "Events",       initials: "YS", color: "#EA4335", image: "/members/youssef_samri.jpg" },
+  { name: "Meriem Kourad",   role: "Media Manager",              department: "Marketing",    initials: "MK", color: "#34A853", image: "/members/meriem_kourad.jpg" },
+  { name: "Mohammed Addi",   role: "Graphic Designer",           department: "Marketing",    initials: "MA", color: "#4285F4" },
 ];
 
-function MemberCard({ member, index, featured = false }: { member: Member; index: number; featured?: boolean }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
+const SIZES = [180, 145, 145, 130, 130, 130, 118, 118, 118, 118, 118];
+const CANVAS_H = 820;
 
-  const springX = useSpring(mouseX, { stiffness: 200, damping: 30 });
-  const springY = useSpring(mouseY, { stiffness: 200, damping: 30 });
+interface Physics {
+  x: number; y: number;
+  vx: number; vy: number;
+  r: number;
+}
 
-  const rotateX = useTransform(springY, [-0.5, 0.5], [6, -6]);
-  const rotateY = useTransform(springX, [-0.5, 0.5], [-6, 6]);
+function scatter(w: number, h: number): Physics[] {
+  // place bubbles in a loose grid so they don't all start overlapping
+  const cols = 4;
+  return members.map((_, i) => {
+    const r = SIZES[i] / 2;
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cellW = w / cols;
+    const cellH = h / Math.ceil(members.length / cols);
+    return {
+      x: cellW * col + cellW / 2 + (Math.random() - 0.5) * 40,
+      y: cellH * row + cellH / 2 + (Math.random() - 0.5) * 40,
+      vx: (Math.random() - 0.5) * 0.55,
+      vy: (Math.random() - 0.5) * 0.55,
+      r,
+    };
+  });
+}
 
-  function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
-    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
-  }
-
-  function handleMouseLeave() {
-    mouseX.set(0);
-    mouseY.set(0);
-  }
-
+/* ── Tooltip ─────────────────────────────────────────────────────── */
+function Tooltip({ member, size, visible }: { member: Member; size: number; visible: boolean }) {
   return (
-    <motion.div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      initial={{ opacity: 0, y: 60 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.6, delay: index * 0.08 }}
-      style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-      className={`relative overflow-hidden rounded-[28px] cursor-pointer group ${featured ? 'md:col-span-2 md:row-span-2' : ''}`}
+    <div
+      className="absolute left-1/2 z-50 pointer-events-none"
+      style={{
+        bottom: size / 2 + 16,
+        transform: 'translateX(-50%)',
+        opacity: visible ? 1 : 0,
+        translate: visible ? '0 0' : '0 8px',
+        scale: visible ? '1' : '0.93',
+        transition: 'opacity 0.22s ease, translate 0.22s ease, scale 0.22s ease',
+      }}
     >
-      {/* Card background */}
-      <div className="absolute inset-0 bg-white/[0.03] backdrop-blur-sm border border-white/[0.08] rounded-[28px] transition-all duration-500 group-hover:border-white/20 group-hover:bg-white/[0.06]" />
-
-      {/* Accent glow on hover */}
-      <motion.div
-        className="absolute -bottom-20 -right-20 w-60 h-60 rounded-full blur-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-700 pointer-events-none"
-        style={{ backgroundColor: member.color }}
-      />
-
-      {/* Mouse-tracking spotlight */}
-      <motion.div
-        className="absolute w-[250px] h-[250px] rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+      <div
+        className="px-4 py-3 rounded-2xl text-center"
         style={{
-          background: `radial-gradient(circle, ${member.color}22 0%, transparent 70%)`,
-          left: useTransform(springX, (v) => `calc(${(v + 0.5) * 100}% - 125px)`),
-          top: useTransform(springY, (v) => `calc(${(v + 0.5) * 100}% - 125px)`),
+          background: 'rgba(5,5,10,0.92)',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+          border: `1px solid ${member.color}45`,
+          boxShadow: `0 8px 32px rgba(0,0,0,0.55), 0 0 0 1px ${member.color}18`,
+          minWidth: 140,
         }}
-      />
-
-      {/* Content */}
-      <div className={`relative z-10 ${featured ? 'p-10 md:p-14' : 'p-8'} flex flex-col items-center text-center h-full justify-center gap-6`}>
-        
-        {/* Avatar */}
-        <div className="relative">
-          {/* Animated ring */}
-          <motion.div
-            className="absolute -inset-1.5 rounded-full opacity-40 group-hover:opacity-100 transition-opacity duration-500"
-            style={{ border: `2px solid ${member.color}` }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-          />
-          <motion.div
-            className="absolute -inset-3 rounded-full opacity-0 group-hover:opacity-40 transition-opacity duration-500"
-            style={{ border: `1px dashed ${member.color}` }}
-            animate={{ rotate: -360 }}
-            transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-          />
-
-          {/* Profile image placeholder — replace src with real photos */}
-          <div
-            className={`${featured ? 'w-28 h-28 text-3xl' : 'w-20 h-20 text-xl'} rounded-full flex items-center justify-center font-black tracking-tight relative overflow-hidden transition-transform duration-500 group-hover:scale-110`}
-            style={{
-              backgroundColor: `${member.color}18`,
-              color: member.color,
-              border: `2px solid ${member.color}40`,
-            }}
-          >
-            {member.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
-            ) : (
-              member.initials
-            )}
-          </div>
-        </div>
-
-        {/* Info */}
-        <div>
-          <h3 className={`${featured ? 'text-3xl' : 'text-xl'} font-bold text-white tracking-tight mb-1 group-hover:text-transparent group-hover:bg-clip-text transition-all duration-300`} style={{ backgroundImage: `linear-gradient(90deg, #fff, ${member.color})` }}>
-            {member.name}
-          </h3>
-          <p className="text-base font-medium mb-3 transition-colors duration-300" style={{ color: member.color }}>
-            {member.role}
-          </p>
-          <span className="px-4 py-1.5 rounded-full text-[11px] font-bold tracking-[0.15em] uppercase border transition-all duration-300" style={{ borderColor: `${member.color}30`, color: `${member.color}aa`, backgroundColor: `${member.color}08` }}>
-            {member.department}
-          </span>
-        </div>
-
-        {featured && (
-          <p className="text-gray-400 text-sm font-light leading-relaxed max-w-sm mt-2">
-            Leading GDG On Campus ENSAH with a vision to build the most vibrant developer community in the region.
-          </p>
-        )}
+      >
+        <p className="text-white font-bold text-sm leading-tight mb-0.5 whitespace-nowrap">{member.name}</p>
+        <p className="font-semibold text-[11px] leading-snug mb-2 whitespace-nowrap" style={{ color: member.color }}>{member.role}</p>
+        <span
+          className="inline-block px-2 py-0.5 rounded-full text-[9px] font-black tracking-widest uppercase"
+          style={{ background: `${member.color}18`, color: `${member.color}cc`, border: `1px solid ${member.color}28` }}
+        >
+          {member.department}
+        </span>
       </div>
-    </motion.div>
+      <div className="flex justify-center -mt-[1px]">
+        <div
+          className="w-2.5 h-2.5 rotate-45"
+          style={{ background: 'rgba(5,5,10,0.92)', border: `1px solid ${member.color}45`, borderTop: 'none', borderLeft: 'none' }}
+        />
+      </div>
+    </div>
   );
 }
 
+/* ── Single bubble — rendered once, moved via DOM ref ─────────────── */
+function Bubble({ member, size, isFounder, nodeRef }: {
+  member: Member;
+  size: number;
+  isFounder: boolean;
+  nodeRef: (el: HTMLDivElement | null) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const fontSize = isFounder ? 36 : size <= 118 ? 20 : 26;
+
+  return (
+    <div
+      ref={nodeRef}
+      className="absolute"
+      style={{ width: size, height: size, willChange: 'transform', top: 0, left: 0 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* Glow halo */}
+      <div
+        className="absolute inset-0 rounded-full pointer-events-none"
+        style={{
+          background: `radial-gradient(circle, ${member.color}55 0%, transparent 68%)`,
+          opacity: hovered ? 0.7 : 0.18,
+          transform: hovered ? 'scale(1.3)' : 'scale(1)',
+          transition: 'opacity 0.4s ease, transform 0.4s ease',
+        }}
+      />
+
+      {/* Spinning orbit ring 1 */}
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          inset: -5,
+          border: `1.5px solid ${member.color}70`,
+          opacity: isFounder ? 0.7 : hovered ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+          animation: `spin-cw ${isFounder ? 9 : 13}s linear infinite`,
+        }}
+      />
+      {/* Spinning orbit ring 2 */}
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          inset: -12,
+          border: `1px dashed ${member.color}35`,
+          opacity: isFounder ? 0.4 : hovered ? 0.55 : 0,
+          transition: 'opacity 0.3s ease',
+          animation: `spin-ccw ${isFounder ? 16 : 22}s linear infinite`,
+        }}
+      />
+
+      {/* Bubble sphere */}
+      <div
+        className="absolute inset-0 rounded-full flex items-center justify-center cursor-pointer overflow-hidden"
+        style={{
+          background: `radial-gradient(circle at 33% 30%, ${member.color}60 0%, ${member.color}1a 55%, ${member.color}08 100%)`,
+          border: `${isFounder ? 2 : 1.5}px solid ${member.color}${hovered ? 'bb' : '45'}`,
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          boxShadow: hovered
+            ? `0 0 ${isFounder ? 48 : 30}px ${member.color}45, inset 0 0 24px ${member.color}12`
+            : `0 0 ${isFounder ? 22 : 12}px ${member.color}18, inset 0 0 12px ${member.color}06`,
+          transform: hovered ? 'scale(1.1)' : 'scale(1)',
+          transition: 'transform 0.35s cubic-bezier(0.16,1,0.3,1), border-color 0.3s, box-shadow 0.3s',
+        }}
+      >
+        {/* Gloss — only show on top of initials, hidden when image covers the bubble */}
+        {!member.image && (
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              top: '8%', left: '14%',
+              width: '42%', height: '32%',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255,255,255,0.65) 0%, transparent 70%)',
+              opacity: 0.28,
+            }}
+          />
+        )}
+        {/* Photo or initials */}
+        {member.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={member.image}
+            alt={member.name}
+            className="absolute inset-0 w-full h-full object-cover rounded-full"
+          />
+        ) : (
+          <span
+            className="relative z-10 font-black select-none"
+            style={{
+              fontSize,
+              color: member.color,
+              textShadow: `0 0 14px ${member.color}90`,
+            }}
+          >
+            {member.initials}
+          </span>
+        )}
+      </div>
+
+      {/* Tooltip */}
+      <Tooltip member={member} size={size} visible={hovered} />
+    </div>
+  );
+}
+
+/* ── Canvas — physics runs in RAF, positions written via transform ── */
+function BubbleField() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const domRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const physics = useRef<Physics[]>([]);
+  const dims = useRef({ w: 900, h: CANVAS_H });
+  const rafId = useRef<number | null>(null);
+  const initialized = useRef(false);
+
+  const setDomRef = (i: number) => (el: HTMLDivElement | null) => {
+    domRefs.current[i] = el;
+  };
+
+  useEffect(() => {
+    function measure() {
+      if (!containerRef.current) return;
+      const { width } = containerRef.current.getBoundingClientRect();
+      dims.current = { w: width || 900, h: CANVAS_H };
+    }
+
+    measure();
+
+    if (!initialized.current) {
+      physics.current = scatter(dims.current.w, dims.current.h);
+      // Set initial transform on each node
+      physics.current.forEach((b, i) => {
+        const el = domRefs.current[i];
+        if (el) el.style.transform = `translate(${b.x - b.r}px, ${b.y - b.r}px)`;
+      });
+      initialized.current = true;
+    }
+
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  useEffect(() => {
+    function tick() {
+      const bs = physics.current;
+      const { w, h } = dims.current;
+      if (!bs.length) { rafId.current = requestAnimationFrame(tick); return; }
+
+      for (let i = 0; i < bs.length; i++) {
+        const b = bs[i];
+        b.x += b.vx;
+        b.y += b.vy;
+
+        // Wall bounce
+        if (b.x - b.r < 0)  { b.x = b.r;     b.vx =  Math.abs(b.vx); }
+        if (b.x + b.r > w)  { b.x = w - b.r;  b.vx = -Math.abs(b.vx); }
+        if (b.y - b.r < 0)  { b.y = b.r;      b.vy =  Math.abs(b.vy); }
+        if (b.y + b.r > h)  { b.y = h - b.r;  b.vy = -Math.abs(b.vy); }
+
+        // Bubble-bubble elastic collision
+        for (let j = i + 1; j < bs.length; j++) {
+          const o = bs[j];
+          const dx = o.x - b.x;
+          const dy = o.y - b.y;
+          const distSq = dx * dx + dy * dy;
+          const minD = b.r + o.r + 4;
+          if (distSq < minD * minD && distSq > 0) {
+            const dist = Math.sqrt(distSq);
+            const nx = dx / dist;
+            const ny = dy / dist;
+            const overlap = (minD - dist) / 2;
+            b.x -= nx * overlap;
+            b.y -= ny * overlap;
+            o.x += nx * overlap;
+            o.y += ny * overlap;
+            const dot = (b.vx - o.vx) * nx + (b.vy - o.vy) * ny;
+            if (dot > 0) {
+              b.vx -= dot * nx;
+              b.vy -= dot * ny;
+              o.vx += dot * nx;
+              o.vy += dot * ny;
+            }
+          }
+        }
+
+        // Write directly to DOM — no React re-render
+        const el = domRefs.current[i];
+        if (el) el.style.transform = `translate(${b.x - b.r}px, ${b.y - b.r}px)`;
+      }
+
+      rafId.current = requestAnimationFrame(tick);
+    }
+
+    rafId.current = requestAnimationFrame(tick);
+    return () => { if (rafId.current) cancelAnimationFrame(rafId.current); };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative w-full" style={{ height: CANVAS_H }}>
+      {members.map((member, i) => (
+        <Bubble
+          key={member.name}
+          member={member}
+          size={SIZES[i]}
+          isFounder={i === 0}
+          nodeRef={setDomRef(i)}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ── Section ─────────────────────────────────────────────────────── */
 export default function Teams() {
-  const founder = members[0];
-  const rest = members.slice(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <section id="teams" className="relative py-32 px-6 overflow-hidden">
-      {/* Ambient background */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#4285F4] opacity-[0.03] rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#34A853] opacity-[0.03] rounded-full blur-[120px] pointer-events-none" />
+      {/* CSS keyframes for orbit rings — injected once */}
+      <style>{`
+        @keyframes spin-cw  { to { transform: rotate(360deg);  } }
+        @keyframes spin-ccw { to { transform: rotate(-360deg); } }
+      `}</style>
+
+      {/* Ambient glows */}
+      <div className="absolute top-1/4 -left-48 w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none" style={{ background: '#4285F4', opacity: 0.04 }} />
+      <div className="absolute bottom-1/4 -right-48 w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none" style={{ background: '#34A853', opacity: 0.04 }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[280px] rounded-full blur-[130px] pointer-events-none" style={{ background: '#EA4335', opacity: 0.025 }} />
 
       <div className="container mx-auto max-w-7xl relative z-10">
-        {/* Section Header */}
+
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8 }}
-          className="mb-20"
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-16"
         >
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-[2px] bg-gradient-to-r from-[#4285F4] to-[#EA4335] rounded-full" />
-            <span className="text-sm font-semibold tracking-widest text-gray-500 uppercase">
-              Our People
-            </span>
+          <div className="flex items-center gap-3 mb-6">
+            {['#4285F4', '#EA4335', '#FBBC05', '#34A853'].map((c, i) => (
+              <motion.div
+                key={c}
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: c }}
+                animate={{ scale: [1, 1.5, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.35 }}
+              />
+            ))}
+            <span className="text-sm font-semibold tracking-widest text-gray-500 uppercase">Our People</span>
           </div>
-          <h2 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[0.95]">
+          <h2 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.95]">
             The Minds<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4285F4] via-[#FBBC05] to-[#34A853]">
               Behind It All.
             </span>
           </h2>
+          <p className="mt-4 text-gray-500 text-base">Hover over a bubble to discover who&apos;s behind GDG ENSAH.</p>
         </motion.div>
 
-        {/* Leadership — Founder featured */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6" style={{ perspective: '1200px' }}>
-          <MemberCard member={founder} index={0} featured />
-          <MemberCard member={members[1]} index={1} />
-          <MemberCard member={members[2]} index={2} />
-          <MemberCard member={members[3]} index={3} />
-        </div>
-
-        {/* Rest of team */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" style={{ perspective: '1200px' }}>
-          {rest.slice(3).map((member, i) => (
-            <MemberCard key={member.name + member.role} member={member} index={i + 4} />
-          ))}
-        </div>
+        {/* Bubble canvas */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1 }}
+          className="relative rounded-[32px] overflow-hidden"
+          style={{
+            background: 'rgba(255,255,255,0.015)',
+            backdropFilter: 'blur(4px)',
+            border: '1px solid rgba(255,255,255,0.05)',
+          }}
+        >
+          <BubbleField />
+        </motion.div>
 
         {/* Join CTA */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="mt-16 rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-sm p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8"
+          transition={{ duration: 0.8, delay: 0.15 }}
+          className="relative mt-8 rounded-[28px] overflow-hidden"
         >
-          <div>
-            <h3 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-2">
-              Want to be part of the team?
-            </h3>
-            <p className="text-gray-400 text-lg font-light">
-              We're always looking for passionate people to join GDG ENSAH.
-            </p>
-          </div>
-          <button
-              onClick={() => setIsModalOpen(true)}
-              className="relative group overflow-hidden rounded-full p-[1px] shrink-0">
-            <span className="absolute inset-0 bg-gradient-to-r from-[#4285F4] via-[#EA4335] to-[#FBBC05] rounded-full opacity-70 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
-            <div className="relative px-10 py-4 bg-black rounded-full transition-all duration-300 group-hover:bg-black/50">
-              <span className="font-bold text-base tracking-wide text-white">
-                Apply Now
-              </span>
+          <div
+            className="absolute inset-0 rounded-[28px]"
+            style={{
+              background: 'rgba(255,255,255,0.025)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          />
+          <div className="relative z-10 p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div>
+              <h3 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-2">
+                Want to be part of the team?
+              </h3>
+              <p className="text-gray-400 text-lg font-light">
+                We&apos;re always looking for passionate people to join GDG ENSAH.
+              </p>
             </div>
-          </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="relative group overflow-hidden rounded-full p-[1px] shrink-0"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-[#4285F4] via-[#EA4335] to-[#FBBC05] rounded-full opacity-70 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
+              <div className="relative px-10 py-4 bg-black rounded-full transition-all duration-300 group-hover:bg-black/50">
+                <span className="font-bold text-base tracking-wide text-white">Apply Now</span>
+              </div>
+            </button>
+          </div>
         </motion.div>
       </div>
 

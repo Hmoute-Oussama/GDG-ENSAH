@@ -76,8 +76,8 @@ const projects: Project[] = [
     subtitle: "Community Platform",
     description: "An internal social network for GDG ENSAH members — event RSVPs, project collaboration, and knowledge sharing.",
     tech: ["Next.js", "Prisma", "PostgreSQL"],
-    color: "#9C27B0",
-    colorEnd: "#e1bee7",
+    color: "#34A853",
+    colorEnd: "#a8e6cf",
     size: "md:col-span-1",
     icon: (
       <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -219,7 +219,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.3 }}
-                className="text-white/50 text-base leading-relaxed font-light mb-6 max-w-lg"
+                className="text-white/70 text-base leading-relaxed font-light mb-6 max-w-lg"
               >
                 {project.description}
               </motion.p>
@@ -231,7 +231,12 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             {project.tech.map((t) => (
               <span
                 key={t}
-                className="px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-white/[0.06] text-white/60 border border-white/[0.08] group-hover:border-white/20 group-hover:text-white/80 transition-all duration-300"
+                className="px-3 py-1 rounded-full text-xs font-semibold tracking-wide transition-all duration-300"
+                style={{
+                  backgroundColor: `${project.color}15`,
+                  color: project.color,
+                  border: `1px solid ${project.color}35`,
+                }}
               >
                 {t}
               </span>
