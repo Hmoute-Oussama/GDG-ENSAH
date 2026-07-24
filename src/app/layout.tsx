@@ -4,7 +4,7 @@ import "./globals.css";
 import SmoothScrollProvider from "@/components/Layout/SmoothScrollProvider";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
-import BackgroundCanvas from "@/components/Canvas/BackgroundCanvas";
+import BackgroundCanvasLoader from "@/components/Canvas/BackgroundCanvasLoader";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} antialiased`} suppressHydrationWarning>
       <body className="min-h-screen flex flex-col bg-transparent text-foreground overflow-x-hidden selection:bg-[var(--google-blue)] selection:text-white">
-        <BackgroundCanvas />
+        <BackgroundCanvasLoader />
         <SmoothScrollProvider>
           <Header />
           <main className="flex-grow">
