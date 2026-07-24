@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
-import { useRef, useState, MouseEvent } from 'react';
+import { useRef, useState, MouseEvent, ReactElement } from 'react';
 
 interface Project {
   title: string;
@@ -11,7 +11,7 @@ interface Project {
   color: string;
   colorEnd: string;
   size: string;
-  icon: JSX.Element;
+  icon: ReactElement;
 }
 
 const projects: Project[] = [
