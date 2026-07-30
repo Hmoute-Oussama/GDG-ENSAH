@@ -15,16 +15,16 @@ interface Member {
 
 const members: Member[] = [
   { name: "Meriem Jamili",    role: "Founder & Team Leader",      department: "Executive",    initials: "MJ", color: "#4285F4", image: "/members/meriem_jamili.png" },
-  { name: "Marwa El Faiz",    role: "Vice Team Leader",           department: "Executive",    initials: "ME", color: "#EA4335" },
-  { name: "Oumayma Errouas", role: "General Secretary",          department: "Executive",    initials: "OE", color: "#FBBC05" },
-  { name: "Marouane Bouderz", role: "Treasurer",                  department: "Finance",      initials: "MB", color: "#34A853" },
-  { name: "Kaoutar El Ayadi", role: "Sponsorship Manager",        department: "Partnerships", initials: "KE", color: "#4285F4" },
+  { name: "Marwa El Faiz",    role: "Vice Team Leader",           department: "Executive",    initials: "ME", color: "#EA4335", image: "/members/marwa_el_faiz.jpeg" },
+  { name: "Oumayma Errouas", role: "General Secretary",          department: "Executive",    initials: "OE", color: "#FBBC05", image: "/members/oumayma_errouas.jpeg" },
+  { name: "Marouane Bouderz", role: "Treasurer",                  department: "Finance",      initials: "MB", color: "#34A853", image: "/members/marouane_bouderz.jpeg" },
+  { name: "Kaoutar El Ayadi", role: "Sponsorship Manager",        department: "Partnerships", initials: "KE", color: "#4285F4", image: "/members/kaoutar_el_ayadi.jpeg" },
   { name: "Oussama Hmoute",  role: "External Relations",         department: "Partnerships", initials: "OH", color: "#EA4335", image: "/members/oussama_hmoute.jpg" },
-  { name: "Abdelkader Ennia", role: "Community Manager",          department: "Community",    initials: "AE", color: "#34A853" },
+  { name: "Abdelkader Ennia", role: "Community Manager",          department: "Community",    initials: "AE", color: "#34A853", image: "/members/abdelkader_ennia.jpeg" },
   { name: "Karim Erradi",    role: "Human Resources",            department: "People",       initials: "KE", color: "#FBBC05", image: "/members/karim_erradi.jpg" },
   { name: "Youssef Samri",   role: "Event Manager",              department: "Events",       initials: "YS", color: "#EA4335", image: "/members/youssef_samri.jpg" },
   { name: "Meriem Kourad",   role: "Media Manager",              department: "Marketing",    initials: "MK", color: "#34A853", image: "/members/meriem_kourad.jpg" },
-  { name: "Mohammed Addi",   role: "Graphic Designer",           department: "Marketing",    initials: "MA", color: "#4285F4" },
+  { name: "Mohammed Addi",   role: "Graphic Designer",           department: "Marketing",    initials: "MA", color: "#4285F4", image: "/members/mohammed_addi.jpeg" },
 ];
 
 const SIZES = [180, 145, 145, 130, 130, 130, 118, 118, 118, 118, 118];
@@ -108,12 +108,14 @@ function Bubble({ member, size, isFounder, nodeRef }: {
 }) {
   const [hovered, setHovered] = useState(false);
   const fontSize = isFounder ? 36 : size <= 118 ? 20 : 26;
+  const bubbleScale = hovered ? (member.image ? (isFounder ? 1.22 : 1.3) : 1.1) : 1;
+  const imageScale = hovered ? 1.18 : 1;
 
   return (
     <div
       ref={nodeRef}
       className="absolute"
-      style={{ width: size, height: size, willChange: 'transform', top: 0, left: 0 }}
+      style={{ width: size, height: size, willChange: 'transform', top: 0, left: 0, zIndex: hovered ? 40 : 1 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -160,9 +162,9 @@ function Bubble({ member, size, isFounder, nodeRef }: {
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
           boxShadow: hovered
-            ? `0 0 ${isFounder ? 48 : 30}px ${member.color}45, inset 0 0 24px ${member.color}12`
+            ? `0 0 ${isFounder ? 52 : 36}px ${member.color}50, inset 0 0 26px ${member.color}12`
             : `0 0 ${isFounder ? 22 : 12}px ${member.color}18, inset 0 0 12px ${member.color}06`,
-          transform: hovered ? 'scale(1.1)' : 'scale(1)',
+          transform: `scale(${bubbleScale})`,
           transition: 'transform 0.35s cubic-bezier(0.16,1,0.3,1), border-color 0.3s, box-shadow 0.3s',
         }}
       >
@@ -185,7 +187,12 @@ function Bubble({ member, size, isFounder, nodeRef }: {
           <img
             src={member.image}
             alt={member.name}
-            className="absolute inset-0 w-full h-full object-cover rounded-full"
+            className="absolute inset-0 w-full h-full object-cover rounded-full pointer-events-none"
+            style={{
+              transform: `scale(${imageScale})`,
+              filter: hovered ? 'brightness(1.08) contrast(1.08) saturate(1.08)' : 'brightness(0.96) contrast(1.02)',
+              transition: 'transform 0.35s cubic-bezier(0.16,1,0.3,1), filter 0.35s ease',
+            }}
           />
         ) : (
           <span
